@@ -1,0 +1,55 @@
+---
+version: "3.9"
+
+services:
+  syncthing:
+    image: syncthing/syncthing:2.1.1
+    container_name: syncthing
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - syncthing_config:/var/syncthing/config
+      - syncthing_data:/var/syncthing
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.syncthing.rule=Host(`syncthing.${DOMAIN}`)"
+      - "traefik.http.routers.syncthing.entrypoints=websecure"
+      - "traefik.http.routers.syncthing.tls.certresolver=cloudflare"
+      - "traefik.http.services.syncthing.loadbalancer.server.port=8384"
+    networks:
+      - homelab
+    ports:
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+      - "21027:21027/udp"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8384/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  syncthing_config:
+    name: syncthing_config
+  syncthing_data:
+    name: syncthing_data
+
+networks:
+  homelab:
+    external: true
+    name: homelab

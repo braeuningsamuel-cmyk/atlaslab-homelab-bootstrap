@@ -3,18 +3,15 @@ version: "3.9"
 
 services:
   vaultwarden:
-    image: vaultwarden/server:1.33.0
+    image: vaultwarden/server:1.36.0
     container_name: vaultwarden
     restart: unless-stopped
     environment:
       - DOMAIN=https://vault.${DOMAIN}
       - SIGNUPS_ALLOWED=false
-      - INVITATIONS_ALLOWED=true
-      - SHOW_PASSWORD_HINT=***      - LOG_LEVEL=warn
-      - ROCKET_PORT=80
-      - RUST_BACKTRACE=1
-      # Disable web vault if running behind reverse proxy
-      - WEB_VAULT_ENABLED=***
+      - INVITATIONS_ALLOWED=false
+      - SHOW_PASSWORD_HINT=false
+      - LOG_LEVEL=info
     volumes:
       - vaultwarden_data:/data
     labels:
@@ -26,7 +23,7 @@ services:
     networks:
       - homelab
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/alive"]
+      test: ["CMD", "curl", "-f", "http://localhost/alive"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,9 +35,6 @@ services:
           memory: 512M
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
-    pids_limit: 256
     logging:
       driver: json-file
       options:

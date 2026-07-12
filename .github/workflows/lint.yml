@@ -1,0 +1,28 @@
+name: Lint & Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DavidAnson/markdownlint-cli2-action@v24
+        with:
+          config: '.markdownlintrc.json'
+          globs: '**/*.md'
+
+  docker-compose-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate docker-compose files
+        run: |
+          for file in $(find bootstrap/compose -name 'docker-compose.yml'); do
+            echo "Validating $file"
+            docker-compose -f "$file" config > /dev/null || exit 1
+          done
